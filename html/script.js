@@ -30,6 +30,12 @@ document.getElementById('toggle-monitoring').addEventListener('click', () => {
         });
 });
 
+document.getElementById('minimize').addEventListener('click', () => {
+    const ui = document.getElementById('animtest-ui');
+    ui.style.height = ui.style.height === '40px' ? '600px' : '40px';
+    ui.style.overflow = ui.style.overflow === 'hidden' ? 'auto' : 'hidden';
+});
+
 document.getElementById('search-bar').addEventListener('input', (e) => {
     const query = e.target.value;
     fetch(`https://${GetParentResourceName()}/searchAnim`, {
@@ -41,6 +47,14 @@ document.getElementById('search-bar').addEventListener('input', (e) => {
             detectedAnimations = data.results;
             updateDetectedList();
         });
+});
+
+document.getElementById('filter').addEventListener('change', (e) => {
+    const filter = e.target.value;
+    fetch(`https://${GetParentResourceName()}/setFilter`, {
+        method: 'POST',
+        body: JSON.stringify({ filter })
+    });
 });
 
 document.getElementById('pause-resume').addEventListener('click', () => {
