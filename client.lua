@@ -12,6 +12,7 @@ local renderTarget = nil
 local favorites = {}
 local cameraPos = { x = 0.0, y = 2.0, z = -998.0 }
 local cameraFov = 45.0
+local animFilter = nil
 
 -- Register command to toggle UI
 RegisterCommand("animtest", function()
@@ -28,6 +29,14 @@ RegisterCommand("animtest", function()
     end
 end, false)
 
+-- Register help command
+RegisterCommand("animhelp", function()
+    print("AnimTest Commands:")
+    print("/animtest - Toggle the AnimTest UI")
+    print("UI Features: Monitor NPC animations, preview animations, search, filter, save favorites, and export code.")
+    print("Hotkeys: F10 to toggle UI, 1-9 to play favorite animations.")
+end, false)
+
 -- Start monitoring NPCs
 function StartMonitoring()
     Citizen.CreateThread(function()
@@ -38,6 +47,9 @@ function StartMonitoring()
                 if DoesEntityExist(ped) and not IsPedAPlayer(ped) then
                     local dict, anim = GetCurrentPedAnimation(ped)
                     if dict and anim and Config.AnimationUtils.DoesAnimationExist(dict, anim) then
+                        if animFilter and not dict:lower():find(animFilter:lower()) then
+                            goto continue
+                        end
                         local pedId = NetworkGetNetworkIdFromEntity(ped)
                         local lastCheck = lastAnimCheck[pedId] or { dict = "", anim = "" }
                         if lastCheck.dict ~= dict or lastCheck.anim ~= anim then
@@ -46,6 +58,7 @@ function StartMonitoring()
                         end
                     end
                 end
+                ::continue::
             end
             SendNUIMessage({ type = 'updateDetected', animations = detectedAnims })
             SendNUIMessage({ type = 'updateFPS', fps = math.floor(1 / GetFrameTime()) })
@@ -187,6 +200,11 @@ RegisterNUICallback('searchAnim', function(data, cb)
         end
     end
     cb({ results = formattedResults })
+end)
+
+RegisterNUICallback('setFilter', function(data, cb)
+    animFilter = data.filter == "" and nil or data.filter
+    cb('ok')
 end)
 
 RegisterNUICallback('updateCamera', function(data, cb)
