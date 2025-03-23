@@ -16,6 +16,8 @@ body {
     display: none;
     flex-direction: column;
     padding: 10px;
+    resize: both;
+    overflow: auto;
 }
 
 .header {
@@ -24,6 +26,7 @@ body {
     align-items: center;
     padding: 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: move;
 }
 
 .header h1 {
@@ -35,7 +38,7 @@ body {
     font-size: 14px;
 }
 
-#toggle-monitoring {
+#toggle-monitoring, #minimize {
     background: #4CAF50;
     border: none;
     padding: 5px 10px;
@@ -44,7 +47,7 @@ body {
     transition: background 0.3s;
 }
 
-#toggle-monitoring:hover {
+#toggle-monitoring:hover, #minimize:hover {
     background: #45a049;
 }
 
