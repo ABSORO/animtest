@@ -1,0 +1,154 @@
+body {
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    color: white;
+}
+
+.animtest-ui {
+    position: absolute;
+    top: 50px;
+    left: 50px;
+    width: 800px;
+    height: 600px;
+    background: rgba(20, 20, 20, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    display: none;
+    flex-direction: column;
+    padding: 10px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 20px;
+}
+
+#fps {
+    font-size: 14px;
+}
+
+#toggle-monitoring {
+    background: #4CAF50;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#toggle-monitoring:hover {
+    background: #45a049;
+}
+
+.main-content {
+    display: flex;
+    flex: 1;
+    padding: 10px;
+}
+
+.left-panel, .right-panel {
+    flex: 1;
+    padding: 10px;
+}
+
+.left-panel h2, .right-panel h2 {
+    margin: 0 0 10px;
+    font-size: 16px;
+}
+
+.scrollable {
+    max-height: 400px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    padding: 5px;
+}
+
+.animation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.animation-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.animation-item button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.preview-window {
+    width: 200px;
+    height: 150px;
+    background: black;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.camera-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.camera-controls label {
+    font-size: 12px;
+}
+
+.camera-controls input {
+    width: 100%;
+}
+
+.bottom-panel {
+    padding: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.search-filter {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#search-bar, #filter {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    padding: 5px;
+    color: white;
+    width: 100%;
+}
+
+#search-bar:focus, #filter:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+button {
+    background: #4CAF50;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #45a049;
+}
