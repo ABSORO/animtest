@@ -1,7 +1,9 @@
 let isMonitoring = false;
 let detectedAnimations = [];
 let favorites = [];
+let isPaused = false;
 
+// UI visibility and interaction
 window.addEventListener('message', (event) => {
     const data = event.data;
     if (data.type === 'openUI') {
@@ -21,6 +23,7 @@ window.addEventListener('message', (event) => {
     }
 });
 
+// Toggle monitoring
 document.getElementById('toggle-monitoring').addEventListener('click', () => {
     fetch(`https://${GetParentResourceName()}/toggleMonitoring`, { method: 'POST' })
         .then(resp => resp.json())
@@ -30,12 +33,14 @@ document.getElementById('toggle-monitoring').addEventListener('click', () => {
         });
 });
 
+// Minimize UI
 document.getElementById('minimize').addEventListener('click', () => {
     const ui = document.getElementById('animtest-ui');
     ui.style.height = ui.style.height === '40px' ? '600px' : '40px';
     ui.style.overflow = ui.style.overflow === 'hidden' ? 'auto' : 'hidden';
 });
 
+// Search animations
 document.getElementById('search-bar').addEventListener('input', (e) => {
     const query = e.target.value;
     fetch(`https://${GetParentResourceName()}/searchAnim`, {
@@ -49,6 +54,7 @@ document.getElementById('search-bar').addEventListener('input', (e) => {
         });
 });
 
+// Filter animations
 document.getElementById('filter').addEventListener('change', (e) => {
     const filter = e.target.value;
     fetch(`https://${GetParentResourceName()}/setFilter`, {
@@ -57,10 +63,17 @@ document.getElementById('filter').addEventListener('change', (e) => {
     });
 });
 
+// Pause/resume preview
 document.getElementById('pause-resume').addEventListener('click', () => {
-    // Placeholder for pause/resume functionality
+    fetch(`https://${GetParentResourceName()}/togglePause`, { method: 'POST' })
+        .then(resp => resp.json())
+        .then(data => {
+            isPaused = data.paused;
+            document.getElementById('pause-resume').innerText = isPaused ? 'Resume' : 'Pause';
+        });
 });
 
+// Camera controls
 document.querySelectorAll('.camera-controls input').forEach(input => {
     input.addEventListener('input', () => {
         const camX = parseFloat(document.getElementById('cam-x').value);
@@ -74,13 +87,14 @@ document.querySelectorAll('.camera-controls input').forEach(input => {
     });
 });
 
+// Update detected animations list
 function updateDetectedList() {
     const list = document.getElementById('detected-list');
     list.innerHTML = detectedAnimations.map(anim => `
         <div class="animation-item">
             <span>${anim.dict} - ${anim.anim}</span>
             <div>
-                <button onclick="previewAnim('${anim.dict}', '${anim.anim}')">Preview</button>
+                <button onclick="previewAnim('${anim.dict}', '${anim.anim}', 2000)">Preview</button>
                 <button onclick="playAnim('${anim.dict}', '${anim.anim}')">Play</button>
                 <button onclick="addFavorite('${anim.dict}', '${anim.anim}')">Favorite</button>
                 <button onclick="exportAnim('${anim.dict}', '${anim.anim}')">Export</button>
@@ -89,26 +103,29 @@ function updateDetectedList() {
     `).join('');
 }
 
+// Update favorites list
 function updateFavoritesList() {
     const list = document.getElementById('favorites-list');
     list.innerHTML = favorites.map(anim => `
         <div class="animation-item">
             <span>${anim.dict} - ${anim.anim}</span>
             <div>
-                <button onclick="previewAnim('${anim.dict}', '${anim.anim}')">Preview</button>
+                <button onclick="previewAnim('${anim.dict}', '${anim.anim}', 2000)">Preview</button>
                 <button onclick="playAnim('${anim.dict}', '${anim.anim}')">Play</button>
             </div>
         </div>
     `).join('');
 }
 
-function previewAnim(dict, anim) {
+// Preview animation
+function previewAnim(dict, anim, duration) {
     fetch(`https://${GetParentResourceName()}/previewAnim`, {
         method: 'POST',
-        body: JSON.stringify({ dict, anim })
+        body: JSON.stringify({ dict, anim, duration })
     });
 }
 
+// Play animation
 function playAnim(dict, anim) {
     fetch(`https://${GetParentResourceName()}/playAnim`, {
         method: 'POST',
@@ -116,6 +133,7 @@ function playAnim(dict, anim) {
     });
 }
 
+// Add to favorites
 function addFavorite(dict, anim) {
     fetch(`https://${GetParentResourceName()}/addFavorite`, {
         method: 'POST',
@@ -123,6 +141,7 @@ function addFavorite(dict, anim) {
     });
 }
 
+// Export animation
 function exportAnim(dict, anim) {
     fetch(`https://${GetParentResourceName()}/exportAnim`, {
         method: 'POST',
