@@ -1,7 +1,9 @@
 -- AnimTest Client Script
+-- Load the animation list
 local Config = {}
-dofile("data/animations.lua") -- Load animations.lua
+dofile("data/animations.lua")
 
+-- State variables
 local isMonitoring = false
 local isUIOpen = false
 local nearbyPeds = {}
@@ -13,6 +15,15 @@ local favorites = {}
 local cameraPos = { x = 0.0, y = 2.0, z = -998.0 }
 local cameraFov = 45.0
 local animFilter = nil
+local targetPed = nil
+local isPreviewPaused = false
+
+-- Scenario to animation mapping
+local scenarioToAnim = {
+    ["WORLD_HUMAN_SIT_GROUND"] = { dict = "amb_rest_sit@world_human_fire_sit@male@male_a@exit", anim = "exit" },
+    ["WORLD_HUMAN_DRINKING"] = { dict = "amb_rest_drunk@prop_human_seat_chair@porch@drinking@male_a@idle_c", anim = "idle_g" },
+    -- Add more mappings as needed
+}
 
 -- Register command to toggle UI
 RegisterCommand("animtest", function()
@@ -33,20 +44,37 @@ end, false)
 RegisterCommand("animhelp", function()
     print("AnimTest Commands:")
     print("/animtest - Toggle the AnimTest UI")
+    print("/animtarget - Target a specific NPC to monitor its animations")
     print("UI Features: Monitor NPC animations, preview animations, search, filter, save favorites, and export code.")
     print("Hotkeys: F10 to toggle UI, 1-9 to play favorite animations.")
+end, false)
+
+-- Register targeted monitoring command
+RegisterCommand("animtarget", function()
+    local ped = GetTargetedPed()
+    if ped then
+        targetPed = ped
+        print("Targeting NPC: " .. NetworkGetNetworkIdFromEntity(ped))
+    else
+        targetPed = nil
+        print("No NPC targeted")
+    end
 end, false)
 
 -- Start monitoring NPCs
 function StartMonitoring()
     Citizen.CreateThread(function()
         while isMonitoring and isUIOpen do
-            nearbyPeds = GetNearbyPeds(10.0)
+            if targetPed and DoesEntityExist(targetPed) then
+                nearbyPeds = { targetPed }
+            else
+                nearbyPeds = GetNearbyPeds(10.0)
+            end
             local detectedAnims = {}
             for _, ped in ipairs(nearbyPeds) do
                 if DoesEntityExist(ped) and not IsPedAPlayer(ped) then
                     local dict, anim = GetCurrentPedAnimation(ped)
-                    if dict and anim and Config.AnimationUtils.DoesAnimationExist(dict, anim) then
+                    if dict and anim then
                         if animFilter and not dict:lower():find(animFilter:lower()) then
                             goto continue
                         end
@@ -87,6 +115,17 @@ function GetNearbyPeds(radius)
     return peds
 end
 
+-- Get targeted ped
+function GetTargetedPed()
+    local playerPed = PlayerPedId()
+    local coords = GetEntityCoords(playerPed)
+    local _, hit, endCoords, _, entity = GetShapeTestResult(StartShapeTestRay(coords.x, coords.y, coords.z, coords.x + 10.0, coords.y, coords.z, -1, playerPed, 0))
+    if hit and IsEntityAPed(entity) and not IsPedAPlayer(entity) then
+        return entity
+    end
+    return nil
+end
+
 -- Detect current animation
 function GetCurrentPedAnimation(ped)
     for dict, anims in pairs(Config.Animations) do
@@ -101,6 +140,11 @@ function GetCurrentPedAnimation(ped)
     end
     if IsPedUsingAnyScenario(ped) then
         local scenario = "scenario" -- Placeholder; map scenarios to anims
+        for scenarioName, animData in pairs(scenarioToAnim) do
+            if IsPedUsingScenario(ped, scenarioName) then
+                return animData.dict, animData.anim
+            end
+        end
         return "scenario", scenario
     end
     return nil, nil
@@ -130,7 +174,7 @@ function SetupPreview()
 end
 
 -- Play animation in preview
-function PreviewAnimation(dict, anim)
+function PreviewAnimation(dict, anim, duration)
     if not previewPed then
         SetupPreview()
     end
@@ -138,16 +182,21 @@ function PreviewAnimation(dict, anim)
     while not HasAnimDictLoaded(dict) do
         Wait(0)
     end
-    TaskPlayAnim(previewPed, dict, anim, 1.0, 1.0, 2000, 1, 0.0, false, false, false, "", false)
+    TaskPlayAnim(previewPed, dict, anim, 1.0, 1.0, duration or 2000, 1, 0.0, false, false, false, "", false)
     SendNUIMessage({ type = 'updatePlaying', anim = anim })
 
     Citizen.CreateThread(function()
-        local endTime = GetGameTimer() + 2000
+        local endTime = GetGameTimer() + (duration or 2000)
         while GetGameTimer() < endTime do
-            SetRenderTarget(renderTarget, true)
-            RenderScriptCams(true, false, 0, true, false)
-            DrawSprite("preview_window", "preview_window", 0.5, 0.5, 1.0, 1.0, 0.0, 255, 255, 255, 255)
-            Wait(0)
+            if isPreviewPaused then
+                Wait(100)
+                endTime = GetGameTimer() + (duration or 2000)
+            else
+                SetRenderTarget(renderTarget, true)
+                RenderScriptCams(true, false, 0, true, false)
+                DrawSprite("preview_window", "preview_window", 0.5, 0.5, 1.0, 1.0, 0.0, 255, 255, 255, 255)
+                Wait(0)
+            end
         end
         ClearPedTasks(previewPed)
     end)
@@ -163,7 +212,7 @@ RegisterNUICallback('toggleMonitoring', function(data, cb)
 end)
 
 RegisterNUICallback('previewAnim', function(data, cb)
-    PreviewAnimation(data.dict, data.anim)
+    PreviewAnimation(data.dict, data.anim, data.duration)
     cb('ok')
 end)
 
@@ -217,6 +266,11 @@ RegisterNUICallback('updateCamera', function(data, cb)
     cb('ok')
 end)
 
+RegisterNUICallback('togglePause', function(data, cb)
+    isPreviewPaused = not isPreviewPaused
+    cb({ paused = isPreviewPaused })
+end)
+
 -- Cleanup
 AddEventHandler('onResourceStop', function(resourceName)
     if GetCurrentResourceName() == resourceName then
@@ -227,5 +281,6 @@ AddEventHandler('onResourceStop', function(resourceName)
             DestroyCam(previewCam, false)
         end
         RenderScriptCams(false, false, 0, true, false)
+        SetNuiFocus(false, false)
     end
 end)
