@@ -8,7 +8,7 @@ files {
     'html/ui.html',
     'html/style.css',
     'html/script.js',
-    'html/assets/*',
     'data/animations.lua'
 }
 version '1.0.0'
+description 'AnimTest: A devtool for RedM animation testing'
